@@ -1,4 +1,4 @@
-# Hirelytics 
+# 
 
 **Placement Prediction System using Machine Learning**
 
