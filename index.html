@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Predictor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            background: linear-gradient(45deg, #672f03,#deab81,#763610);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: rgba(67, 41, 41, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            color: rgb(161, 142, 142);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        h2 { text-align: center; color: #fcf8f8; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 5px; color: #050000; font-weight: 600; }
+        input, select {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border: 2px solid #764ba2;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+            transform: scale(1.01); 
+            transition: all 0.2s ease;
+}
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #b9c883 0%, #ea6666 100%);
+            color: rgb(110, 14, 14);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #b36a80 0%, #903f62 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(118, 75, 162, 0.4);
+}
+
+button:active {
+    transform: translateY(-1px); 
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Placement Status Predictor</h2>
+    <form id="predictorForm">
+        <div class="form-group">
+            <label for="CGPA">CGPA (out of 10):</label>
+            <input type="number" id="CGPA" step="0.01" min="0" max="10" required>
+        </div>
+        <div class="form-group">
+            <label for="Internships">No. of Internships:</label>
+            <input type="number" id="Internships" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="Projects">No. of Projects:</label>
+            <input type="number" id="Projects" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="Workshops">No. of Workshops:</label>
+            <input type="number" id="Workshops" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="AptitudeTestScore">Aptitude Test Score (%):</label>
+            <input type="number" id="AptitudeTestScore" min="0" max="100" required>
+        </div>
+        <div class="form-group">
+            <label for="SoftSkillsRating">Softskill Rating (1-5):</label>
+            <input type="number" id="SoftSkillsRating" min="1" max="5" required>
+        </div>
+        <div class="form-group">
+            <label for="PlacementTraining">Placement Training:</label>
+            <select id="PlacementTraining">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+            </select>
+        </div>
+       
+    </form>
+    
+</div>
+
+<div class="button-container" style="text-align: center; margin-top: 20px;">
+    <button type="button" onclick="predictPlacement()">Predict</button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFIok0fx7hW_RKeb9pMYwshrR5gMlo0pU",
+    authDomain: "hirelytics-535c2.firebaseapp.com",
+    projectId: "hirelytics-535c2",
+    storageBucket: "hirelytics-535c2.firebasestorage.app",
+    messagingSenderId: "961118392323",
+    appId: "1:961118392323:web:b474e6683cf7aab5a93e36",
+    measurementId: "G-QFPP76X736"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+window.predictPlacement= async function() {
+    // console.log("Button clicked!");
+    // Collect data from form
+    const formData = {
+        CGPA: document.getElementById('CGPA').value,
+        Internships: document.getElementById('Internships').value,
+        Projects: document.getElementById('Projects').value,
+        Workshops: document.getElementById('Workshops').value,
+        AptitudeTestScore: document.getElementById('AptitudeTestScore').value,
+        SoftSkillsRating: document.getElementById('SoftSkillsRating').value,
+        PlacementTraining: document.getElementById('PlacementTraining').value
+    };
+
+    try {
+        // Sending data to Flask API
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.probability !== undefined) {
+            // prob result stored in session storage
+            sessionStorage.setItem('placement_prob', result.probability);
+            // Redirection to the result webpage
+            window.location.href = "result.html";
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Make sure your Flask server is running!");
+    }
+}
+</script>
+
+</body>
+
+</html>
+
